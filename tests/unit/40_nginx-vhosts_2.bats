@@ -107,6 +107,55 @@ assert_error_log() {
   assert_failure
 }
 
+@test "(nginx-vhosts) nginx:set bind-address" {
+  run deploy_app
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run /bin/bash -c "dokku nginx:bind-address $TEST_APP bind-address-ipv4 127.0.0.1"
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run /bin/bash -c "dokku nginx:bind-address $TEST_APP bind-address-ipv4 ::1"
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run /bin/bash -c "dokku nginx:build-config $TEST_APP"
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run /bin/bash -c "dokku nginx:show-conf $TEST_APP"
+  echo "output: $output"
+  echo "status: $status"
+  assert_output_contains "listen      [::1]:80;"
+  assert_output_contains "listen      127.0.0.1:80;"
+
+  run /bin/bash -c "dokku nginx:bind-address $TEST_APP bind-address-ipv4"
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run /bin/bash -c "dokku nginx:bind-address $TEST_APP bind-address-ipv4"
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run /bin/bash -c "dokku nginx:build-config $TEST_APP"
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run /bin/bash -c "dokku nginx:show-conf $TEST_APP"
+  echo "output: $output"
+  echo "status: $status"
+  assert_output_contains "listen      [::]:80;"
+  assert_output_contains "listen      80;"
+}
+
 @test "(nginx-vhosts) nginx:validate" {
   deploy_app
   run /bin/bash -c "dokku nginx:validate"
